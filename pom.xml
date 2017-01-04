@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.github.kurbatov</groupId>
+    <groupId>com.ysoft.firmata4f</groupId>
     <artifactId>firmata4j</artifactId>
     <version>2.5.0-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -22,12 +22,12 @@
             <url>https://github.com/kurbatov</url>
         </developer>
     </developers>
-    <scm>
+<!--    <scm>
         <url>https://github.com/kurbatov/firmata4j</url>
         <connection>scm:git:git@github.com:kurbatov/firmata4j.git</connection>
         <developerConnection>scm:git:git@github.com:kurbatov/firmata4j.git</developerConnection>
         <tag>HEAD</tag>
-    </scm>
+    </scm>-->
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,18 +37,17 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.scream3r</groupId>
-            <artifactId>jssc</artifactId>
-            <version>${jssc.version}</version>
-        </dependency>
         
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.7</version>
         </dependency>
-        
+        <dependency>
+            <groupId>com.sparetimelabs</groupId>
+            <artifactId>purejavacomm</artifactId>
+            <version>1.0.1</version> 
+        </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
@@ -87,16 +86,6 @@
                     <source>1.7</source>
                     <target>1.7</target>
                     <compilerArgument>-Xlint:unchecked</compilerArgument>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.17</version>
-                <configuration>
-                    <suiteXmlFiles>
-                        <suiteXmlFile>${test.resource.directory}/testng.xml</suiteXmlFile>
-                    </suiteXmlFiles>
                 </configuration>
             </plugin>
             <plugin>
@@ -166,7 +155,14 @@
         </profile>
     </profiles>
     
-    <distributionManagement>
+    <repositories>
+        <repository>
+            <id>sparetimes</id>
+            <url>http://sparetimelabs.com/maven2/</url>
+        </repository>
+    </repositories>
+    
+<!--    <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
@@ -175,6 +171,6 @@
             <id>ossrh</id>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
-    </distributionManagement>
+    </distributionManagement>-->
     
 </project>

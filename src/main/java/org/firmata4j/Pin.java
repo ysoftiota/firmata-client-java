@@ -117,7 +117,7 @@ public interface Pin {
             return values()[modeToken];
         }
     }
-
+ 
     /**
      * Return an {@link IODevice} the pin belongs to.
      *
@@ -169,7 +169,7 @@ public interface Pin {
      * @return current value of the pin
      */
     public long getValue();
-
+    
     /**
      * Sets the value to the pin. It is impossible to set a value to a pin in
      * input mode such as {@link Mode#INPUT} or {@link Mode#ANALOG}.
@@ -180,7 +180,7 @@ public interface Pin {
      * {@link Mode#INPUT} or {@link Mode#ANALOG}.
      */
     public void setValue(long value) throws IOException, IllegalStateException;
-
+    
     /**
      * Adds the specified listener to receive events from this pin.
      *
