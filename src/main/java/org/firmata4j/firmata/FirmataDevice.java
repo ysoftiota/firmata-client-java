@@ -23,10 +23,6 @@
  */
 package org.firmata4j.firmata;
 
-import jssc.SerialPort;
-import jssc.SerialPortEvent;
-import jssc.SerialPortEventListener;
-import jssc.SerialPortException;
 import org.firmata4j.I2CDevice;
 import org.firmata4j.IODevice;
 import org.firmata4j.IODeviceEventListener;
@@ -48,6 +44,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TooManyListenersException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,6 +52,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.firmata4j.firmata.parser.FirmataToken;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import purejavacomm.CommPortIdentifier;
+import purejavacomm.NoSuchPortException;
+import purejavacomm.PortInUseException;
+import purejavacomm.PureJavaSerialPort;
+import purejavacomm.SerialPortEvent;
+import purejavacomm.SerialPortEventListener;
+import purejavacomm.UnsupportedCommOperationException;
 
 /**
  * Implements {@link IODevice} that is using Firmata protocol.
@@ -63,10 +67,12 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
  */
 public class FirmataDevice implements IODevice, SerialPortEventListener {
 
+    private static final long TIMEOUT = 15000L;
+    private static final Logger LOGGER = LoggerFactory.getLogger(FirmataDevice.class);
+
     private final BlockingQueue<byte[]> byteQueue = new ArrayBlockingQueue<>(128);
     private final FirmataParser parser = new FirmataParser(byteQueue);
     private final Thread parserExecutor = new Thread(parser, "firmata-parser-thread");
-    private final SerialPort port;
     private final Set<IODeviceEventListener> listeners = Collections.synchronizedSet(new LinkedHashSet<IODeviceEventListener>());
     private final List<FirmataPin> pins = Collections.synchronizedList(new ArrayList<FirmataPin>());
     private final AtomicBoolean started = new AtomicBoolean(false);
@@ -74,10 +80,46 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
     private final AtomicInteger initializedPins = new AtomicInteger(0);
     private final AtomicInteger longestI2CDelay = new AtomicInteger(0);
     private final Map<Byte, FirmataI2CDevice> i2cDevices = new HashMap<>();
+    private PureJavaSerialPort commPort;
+    private final CommPortIdentifier commPortIdentifier;
+    private int serialPortBaudRate = 57600;
+    private int serialPortDataBits = 8;
+    private int serialPortStopBits = 1;
+    private int serialPortParity = 0;
+
     private volatile Map<String, Object> firmwareInfo;
     private volatile Map<Integer, Integer> analogMapping;
-    private static final long TIMEOUT = 15000L;
-    private static final Logger LOGGER = LoggerFactory.getLogger(FirmataDevice.class);
+
+    /**
+     * Constructs FirmataDevice instance on specified port.
+     *
+     * @param portName The port name the device is connected to.
+     * @param serialPortBaudRate Serial Port baud rate used to communicate with the Firmata Device (StandardFirmata uses
+     * 57600).
+     * @param serialPortDataBits Serial Port DataBits configuration (generally 8).
+     * @param serialPortStopBits Serial Port StopBits configuration (generally 1).
+     * @param serialPortParity Serial Port ParityBit configuration (generally 0).
+     */
+    public FirmataDevice(String portName, int serialPortBaudRate, int serialPortDataBits,
+            int serialPortStopBits, int serialPortParity) {
+        this(portName);
+        this.serialPortBaudRate = serialPortBaudRate;
+        this.serialPortDataBits = serialPortDataBits;
+        this.serialPortParity = serialPortParity;
+        this.serialPortStopBits = serialPortStopBits;
+    }
+
+    /**
+     * Constructs FirmataDevice instance on specified port.
+     *
+     * @param portName The port name the device is connected to.
+     * @param serialPortBaudRate Serial Port baud rate used to communicate with the Firmata Device (StandardFirmata uses
+     * 57600).
+     */
+    public FirmataDevice(String portName, int serialPortBaudRate) {
+        this(portName);
+        this.serialPortBaudRate = serialPortBaudRate;
+    }
 
     /**
      * Constructs FirmataDevice instance on specified port.
@@ -85,7 +127,11 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
      * @param portName the port name the device is connected to
      */
     public FirmataDevice(String portName) {
-        this.port = new SerialPort(portName);
+        try {
+            this.commPortIdentifier = CommPortIdentifier.getPortIdentifier(portName);
+        } catch (NoSuchPortException ex) {
+            throw new IllegalArgumentException("Communications port " + portName + " not found or connected.");
+        }
     }
 
     @Override
@@ -116,27 +162,31 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
              Either way, when we hear the REPORT_FIRMWARE reply, we
              know the board is alive and ready to communicate.
              */
-            if (!port.isOpened()) {
-                try {
-                    port.openPort();
-                    port.setParams(
-                            SerialPort.BAUDRATE_57600,
-                            SerialPort.DATABITS_8,
-                            SerialPort.STOPBITS_1,
-                            SerialPort.PARITY_NONE);
-                } catch (SerialPortException ex) {
-                	parserExecutor.interrupt();
-                    throw new IOException("Cannot start firmata device", ex);
-                }
-            }
+
             try {
-                port.setEventsMask(SerialPort.MASK_RXCHAR);
-                port.addEventListener(this);
-                sendMessage(FirmataMessageFactory.REQUEST_FIRMWARE);
-            } catch (SerialPortException | IOException ex) {
-               	parserExecutor.interrupt();
-                throw new IOException("Cannot start firmata device", ex);
+                commPort = (PureJavaSerialPort) commPortIdentifier.open(
+                        FirmataDevice.class.getName(),
+                        2000);
+            } catch (PortInUseException e) {
+                LOGGER.error("Cannot open communications port {}. Cannot obtain ownership!", commPortIdentifier.getName());
+                throw new IOException("Cannot start firmata device", e);
             }
+
+            try {
+                commPort.setSerialPortParams(serialPortBaudRate, serialPortDataBits, serialPortStopBits, serialPortParity);
+            } catch (UnsupportedCommOperationException e) {
+                LOGGER.error("Unable to configure communications port {} to baud rate {}.", commPortIdentifier.getName(), serialPortBaudRate);
+                throw new IOException("Unable to configure communications port", e);
+            }
+            commPort.notifyOnDataAvailable(true);
+            commPort.notifyOnOutputEmpty(true);
+            try {
+                commPort.addEventListener(this);
+            } catch (TooManyListenersException ex) {
+                throw new IllegalStateException(ex);
+            }
+
+            sendMessage(FirmataMessageFactory.REQUEST_FIRMWARE);
         }
     }
 
@@ -235,12 +285,15 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
     @Override
     public void serialEvent(SerialPortEvent event) {
         // queueing data from input buffer to processing by FSM logic
-        if (event.isRXCHAR() && event.getEventValue() > 0) {
+        if (event.getEventType() == SerialPortEvent.DATA_AVAILABLE && event.getNewValue()) {
             try {
-                while (!byteQueue.offer(port.readBytes())) {
+                int available = commPort.getInputStream().available();
+                final byte[] readBytes = new byte[available];
+                commPort.getInputStream().read(readBytes);
+                while (!byteQueue.offer(readBytes)) {
                     // trying to place bytes to queue until it succeeds
                 }
-            } catch (SerialPortException ex) {
+            } catch (IOException ex) {
                 LOGGER.error("Cannot read from device", ex);
             }
         }
@@ -255,8 +308,8 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
      */
     void sendMessage(byte[] msg) throws IOException {
         try {
-            port.writeBytes(msg);
-        } catch (SerialPortException ex) {
+            commPort.getOutputStream().write(msg);
+        } catch (IOException ex) {
             throw new IOException("Cannot send message to device", ex);
         }
     }
@@ -274,14 +327,12 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
     }
 
     /**
-     * Sets delay between the moment an I2C device's register is written to and
-     * the moment when the data can be read from that register. The delay is set
-     * per firmata-device (not per I2C device). So firmata-device uses the
-     * longest delay.
+     * Sets delay between the moment an I2C device's register is written to and the moment when the data can be read
+     * from that register. The delay is set per firmata-device (not per I2C device). So firmata-device uses the longest
+     * delay.
      *
      * @param delay
-     * @throws IOException when sending of configuration to firmata-device
-     * failed
+     * @throws IOException when sending of configuration to firmata-device failed
      */
     void setI2CDelay(int delay) throws IOException {
         byte[] message = FirmataMessageFactory.i2cConfigRequest(delay);
@@ -295,21 +346,15 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
     }
 
     /**
-     * Tries to release all resources and properly terminate the connection to
-     * the hardware.
+     * Tries to release all resources and properly terminate the connection to the hardware.
      *
      * @throws IOException when communication could not be stopped properly
      */
     private void shutdown() throws IOException {
         ready.set(false);
-        try {
-            sendMessage(FirmataMessageFactory.analogReport(false));
-            sendMessage(FirmataMessageFactory.digitalReport(false));
-            port.purgePort(SerialPort.PURGE_RXCLEAR | SerialPort.PURGE_TXCLEAR);
-            port.closePort();
-        } catch (SerialPortException ex) {
-            throw new IOException("Cannot properly stop firmata device", ex);
-        }
+        sendMessage(FirmataMessageFactory.analogReport(false));
+        sendMessage(FirmataMessageFactory.digitalReport(false));
+        commPort.close();
     }
 
     /**
@@ -449,8 +494,8 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
         int pinId = (Integer) event.getBodyItem(PIN_ID);
         if (pinId < pins.size()) {
             FirmataPin pin = pins.get(pinId);
-            if (Pin.Mode.INPUT.equals(pin.getMode()) ||
-            		Pin.Mode.PULLUP.equals(pin.getMode())) {
+            if (Pin.Mode.INPUT.equals(pin.getMode())
+                    || Pin.Mode.PULLUP.equals(pin.getMode())) {
                 pin.updateValue((Integer) event.getBodyItem(PIN_VALUE));
             }
         }
