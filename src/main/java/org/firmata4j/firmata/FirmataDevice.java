@@ -23,6 +23,7 @@
  */
 package org.firmata4j.firmata;
 
+import org.firmata4j.DeviceConfiguration;
 import org.firmata4j.I2CDevice;
 import org.firmata4j.IODevice;
 import org.firmata4j.IODeviceEventListener;
@@ -49,11 +50,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import org.apache.commons.codec.binary.Hex;
+import org.firmata4j.AbstractCustomSysexEvent;
+import org.firmata4j.CustomSysexEventListener;
 import org.firmata4j.firmata.parser.FirmataToken;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
 import purejavacomm.CommPortIdentifier;
-import purejavacomm.NoSuchPortException;
 import purejavacomm.PortInUseException;
 import purejavacomm.PureJavaSerialPort;
 import purejavacomm.SerialPortEvent;
@@ -67,25 +71,21 @@ import purejavacomm.UnsupportedCommOperationException;
  */
 public class FirmataDevice implements IODevice, SerialPortEventListener {
 
-    private static final long TIMEOUT = 15000L;
     private static final Logger LOGGER = LoggerFactory.getLogger(FirmataDevice.class);
 
     private final BlockingQueue<byte[]> byteQueue = new ArrayBlockingQueue<>(128);
-    private final FirmataParser parser = new FirmataParser(byteQueue);
-    private final Thread parserExecutor = new Thread(parser, "firmata-parser-thread");
+    private final FirmataParser parser;
+    private final Thread parserExecutor;
     private final Set<IODeviceEventListener> listeners = Collections.synchronizedSet(new LinkedHashSet<IODeviceEventListener>());
+    private final Set<CustomSysexEventListener> customSysexListeners = Collections.synchronizedSet(new LinkedHashSet<CustomSysexEventListener>());
     private final List<FirmataPin> pins = Collections.synchronizedList(new ArrayList<FirmataPin>());
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final AtomicBoolean ready = new AtomicBoolean(false);
     private final AtomicInteger initializedPins = new AtomicInteger(0);
     private final AtomicInteger longestI2CDelay = new AtomicInteger(0);
     private final Map<Byte, FirmataI2CDevice> i2cDevices = new HashMap<>();
-    private PureJavaSerialPort commPort;
-    private final CommPortIdentifier commPortIdentifier;
-    private int serialPortBaudRate = 57600;
-    private int serialPortDataBits = 8;
-    private int serialPortStopBits = 1;
-    private int serialPortParity = 0;
+    protected PureJavaSerialPort commPort;
+    private DeviceConfiguration deviceConfiguration;
 
     private volatile Map<String, Object> firmwareInfo;
     private volatile Map<Integer, Integer> analogMapping;
@@ -93,76 +93,39 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
     /**
      * Constructs FirmataDevice instance on specified port.
      *
-     * @param portName The port name the device is connected to.
-     * @param serialPortBaudRate Serial Port baud rate used to communicate with the Firmata Device (StandardFirmata uses
-     * 57600).
-     * @param serialPortDataBits Serial Port DataBits configuration (generally 8).
-     * @param serialPortStopBits Serial Port StopBits configuration (generally 1).
-     * @param serialPortParity Serial Port ParityBit configuration (generally 0).
+     * @param deviceConfiguration firmata configuration.
      */
-    public FirmataDevice(String portName, int serialPortBaudRate, int serialPortDataBits,
-            int serialPortStopBits, int serialPortParity) {
-        this(portName);
-        this.serialPortBaudRate = serialPortBaudRate;
-        this.serialPortDataBits = serialPortDataBits;
-        this.serialPortParity = serialPortParity;
-        this.serialPortStopBits = serialPortStopBits;
-    }
-
-    /**
-     * Constructs FirmataDevice instance on specified port.
-     *
-     * @param portName The port name the device is connected to.
-     * @param serialPortBaudRate Serial Port baud rate used to communicate with the Firmata Device (StandardFirmata uses
-     * 57600).
-     */
-    public FirmataDevice(String portName, int serialPortBaudRate) {
-        this(portName);
-        this.serialPortBaudRate = serialPortBaudRate;
-    }
-
-    /**
-     * Constructs FirmataDevice instance on specified port.
-     *
-     * @param portName the port name the device is connected to
-     */
-    public FirmataDevice(String portName) {
-        try {
-            this.commPortIdentifier = CommPortIdentifier.getPortIdentifier(portName);
-        } catch (NoSuchPortException ex) {
-            throw new IllegalArgumentException("Communications port " + portName + " not found or connected.");
-        }
+    public FirmataDevice(DeviceConfiguration deviceConfiguration) {
+        this.deviceConfiguration = deviceConfiguration;
+        this.parser = new FirmataParser(byteQueue, deviceConfiguration);
+        this.parserExecutor = new Thread(parser, "firmata-parser-thread");
     }
 
     @Override
     public void start() throws IOException {
         if (!started.getAndSet(true)) {
             parserExecutor.start();
-            /* 
-             The startup strategy is to open the port and immediately
-             send the REPORT_FIRMWARE message.  When we receive the
-             firmware name reply, then we know the board is ready to
-             communicate.
-
-             For boards like Arduino which use DTR to reset, they may
-             reboot the moment the port opens.  They will not hear this
-             REPORT_FIRMWARE message, but when they finish booting up
-             they will send the firmware message.
-
-             For boards that do not reboot when the port opens, they
-             will hear this REPORT_FIRMWARE request and send the
-             response.  If this REPORT_FIRMWARE request isn't sent,
-             these boards will not automatically send this info.
-
-             Arduino boards that reboot on DTR will act like a board
-             that does not reboot, if DTR is not raised when the
-             port opens.  This program attempts to avoid raising
-             DTR on windows.  (is this possible on Linux and Mac OS-X?)
-
-             Either way, when we hear the REPORT_FIRMWARE reply, we
-             know the board is alive and ready to communicate.
+            /*
+            The startup strategy is to open the port and immediately
+            send the REPORT_FIRMWARE message.  When we receive the
+            firmware name reply, then we know the board is ready to
+            communicate.
+            For boards like Arduino which use DTR to reset, they may
+            reboot the moment the port opens.  They will not hear this
+            REPORT_FIRMWARE message, but when they finish booting up
+            they will send the firmware message.
+            For boards that do not reboot when the port opens, they
+            will hear this REPORT_FIRMWARE request and send the
+            response.  If this REPORT_FIRMWARE request isn't sent,
+            these boards will not automatically send this info.
+            Arduino boards that reboot on DTR will act like a board
+            that does not reboot, if DTR is not raised when the
+            port opens.  This program attempts to avoid raising
+            DTR on windows.  (is this possible on Linux and Mac OS-X?)
+            Either way, when we hear the REPORT_FIRMWARE reply, we
+            know the board is alive and ready to communicate.
              */
-
+            CommPortIdentifier commPortIdentifier = deviceConfiguration.getCommPortIdentifier();
             try {
                 commPort = (PureJavaSerialPort) commPortIdentifier.open(
                         FirmataDevice.class.getName(),
@@ -173,9 +136,13 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
             }
 
             try {
-                commPort.setSerialPortParams(serialPortBaudRate, serialPortDataBits, serialPortStopBits, serialPortParity);
+                commPort.setSerialPortParams(deviceConfiguration.getSerialPortBaudRate(),
+                        deviceConfiguration.getSerialPortDataBits().getValue(),
+                        deviceConfiguration.getSerialPortStopBits().getValue(),
+                        deviceConfiguration.getSerialPortParity().getValue());
             } catch (UnsupportedCommOperationException e) {
-                LOGGER.error("Unable to configure communications port {} to baud rate {}.", commPortIdentifier.getName(), serialPortBaudRate);
+                LOGGER.error("Unable to configure communications port {} to baud rate {}.", commPortIdentifier.getName(),
+                        deviceConfiguration.getSerialPortBaudRate());
                 throw new IOException("Unable to configure communications port", e);
             }
             commPort.notifyOnDataAvailable(true);
@@ -218,7 +185,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
         long timePassed = 0L;
         long timeout = 100;
         while (!isReady()) {
-            if (timePassed >= TIMEOUT) {
+            if (timePassed >= deviceConfiguration.getInitializationTimeout()) {
                 throw new InterruptedException("Connection timeout");
             }
             timePassed += timeout;
@@ -236,14 +203,22 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
         listeners.add(listener);
     }
 
+    public void addCustomSysexEventListener(CustomSysexEventListener listener) {
+        customSysexListeners.add(listener);
+    }
+
     @Override
     public void removeEventListener(IODeviceEventListener listener) {
         listeners.remove(listener);
     }
 
+    public void removeCustomSysexEventListener(CustomSysexEventListener listener) {
+        customSysexListeners.remove(listener);
+    }
+
     @Override
     public Set<Pin> getPins() {
-        return new HashSet<Pin>(pins);
+        return new HashSet<>(pins);
     }
 
     @Override
@@ -289,7 +264,11 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
             try {
                 int available = commPort.getInputStream().available();
                 final byte[] readBytes = new byte[available];
+
                 commPort.getInputStream().read(readBytes);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Recieved serial event:'{}'", Hex.encodeHexString(readBytes));
+                }
                 while (!byteQueue.offer(readBytes)) {
                     // trying to place bytes to queue until it succeeds
                 }
@@ -297,6 +276,10 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
                 LOGGER.error("Cannot read from device", ex);
             }
         }
+    }
+
+    public void sendCustomSysex(byte sysex, byte[] data) throws IOException {
+        sendMessage(FirmataMessageFactory.customSysex(sysex, data));
     }
 
     /**
@@ -308,6 +291,9 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
      */
     void sendMessage(byte[] msg) throws IOException {
         try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Sending message: '{}'", Hex.encodeHexString(msg));
+            }
             commPort.getOutputStream().write(msg);
         } catch (IOException ex) {
             throw new IOException("Cannot send message to device", ex);
@@ -321,9 +307,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
      * @param event the event to be send to the listeners
      */
     void pinChanged(IOEvent event) {
-        for (IODeviceEventListener listener : listeners) {
-            listener.onPinChange(event);
-        }
+        listeners.forEach(listener -> listener.onPinChange(event));
     }
 
     /**
@@ -462,9 +446,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
         ready.set(true);
         // all the pins are initialized so notification is sent to listeners
         IOEvent initIsDone = new IOEvent(this);
-        for (IODeviceEventListener l : listeners) {
-            l.onStart(initIsDone);
-        }
+        listeners.forEach(l -> l.onStart(initIsDone));
     }
 
     /**
@@ -511,30 +493,43 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
         }
     }
 
+    private void onCustomSysexMessage(Event event) {
+        byte b = (byte) event.getBodyItem(CUSTOM_SYSEX_BYTE);
+        Class<? extends AbstractCustomSysexEvent> eventClass = deviceConfiguration.getCustomSysexEvent(b);
+        try {
+            AbstractCustomSysexEvent newEvent = eventClass.newInstance();
+            newEvent.loadContent(event);
+            customSysexListeners.forEach(l -> l.onCustomSysexMessage(b, newEvent));
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
     private void onStringMessageReceive(Event event) {
         String message = (String) event.getBodyItem(STRING_MESSAGE);
         IOEvent evt = new IOEvent(this);
-        for (IODeviceEventListener listener : listeners) {
-            listener.onMessageReceive(evt, message);
-        }
+        listeners.forEach(listener -> listener.onMessageReceive(evt, message));
     }
 
     private class FirmataParser extends FiniteStateMachine implements Runnable {
 
         private final BlockingQueue<byte[]> queue;
 
-        public FirmataParser(BlockingQueue<byte[]> queue) {
-            super(WaitingForMessageState.class);
+        public FirmataParser(BlockingQueue<byte[]> queue, DeviceConfiguration configuration) {
+            super(WaitingForMessageState.class, configuration);
             this.queue = queue;
         }
 
         @Override
         public void onEvent(Event event) {
-            LOGGER.debug("Event name: {}, type: {}, timestamp: {}", new Object[]{event.getName(), event.getType(), event.getTimestamp()});
-            for (Map.Entry<String, Object> entry : event.getBody().entrySet()) {
-                LOGGER.debug("{}: {}", entry.getKey(), entry.getValue());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Event name: {}, type: {}, timestamp: {}", new Object[]{event.getName(), event.getType(), event.getTimestamp()});
+                for (Map.Entry<String, Object> entry : event.getBody().entrySet()) {
+                    LOGGER.debug("{}: {}", entry.getKey(), entry.getValue());
+                }
+                LOGGER.debug("\n");
             }
-            LOGGER.debug("\n");
+
             switch (event.getName()) {
                 case PROTOCOL_MESSAGE:
                     onProtocolReceive(event);
@@ -562,6 +557,9 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
                     break;
                 case I2C_MESSAGE:
                     onI2cMessageReceive(event);
+                    break;
+                case CUSTOM_SYSEX_MESSAGE:
+                    onCustomSysexMessage(event);
                     break;
                 case FiniteStateMachine.FSM_IS_IN_TERMINAL_STATE:
                     // should never happen but who knows

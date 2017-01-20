@@ -21,22 +21,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package org.firmata4j.firmata.parser;
 
 import org.firmata4j.fsm.Event;
 import org.firmata4j.fsm.AbstractState;
-import org.firmata4j.fsm.FiniteStateMachine;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import org.firmata4j.fsm.EventType;
 
 /**
- * This state parses analog mapping message and fires an event that contains
- * information about how the analog ports match to the pin indexes.<br/>
- * After receiving the last byte, the state transfers FSM to
- * {@link WaitingForMessageState}.
+ * This state parses analog mapping message and fires an event that contains information about how the analog ports
+ * match to the pin indexes.<br/>
+ * After receiving the last byte, the state transfers FSM to {@link WaitingForMessageState}.
  *
  * @author Oleg Kurbatov &lt;o.v.kurbatov@gmail.com&gt;
  */
@@ -45,17 +43,13 @@ public class ParsingAnalogMappingState extends AbstractState {
     private int portId;
     private final Map<Integer, Integer> mapping = new ConcurrentHashMap<Integer, Integer>();
 
-    public ParsingAnalogMappingState(FiniteStateMachine fsm) {
-        super(fsm);
-    }
-
     @Override
     public void process(byte b) {
         if (b == END_SYSEX) {
-            Event evt = new Event(ANALOG_MAPPING_MESSAGE, FIRMATA_MESSAGE_EVENT_TYPE);
+            Event evt = new Event(ANALOG_MAPPING_MESSAGE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
             evt.setBodyItem(ANALOG_MAPPING, mapping);
             publish(evt);
-            transitTo(WaitingForMessageState.class);
+            transitTo(WaitingForMessageState.class, b);
         } else if (b != 127) { // if pin does support analog, corresponding analog id is in the byte
             mapping.put((int) b, portId);
         }

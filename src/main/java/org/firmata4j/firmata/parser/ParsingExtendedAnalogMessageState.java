@@ -26,9 +26,9 @@ package org.firmata4j.firmata.parser;
 
 import org.firmata4j.fsm.Event;
 import org.firmata4j.fsm.AbstractState;
-import org.firmata4j.fsm.FiniteStateMachine;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import org.firmata4j.fsm.EventType;
 
 /**
  * This state parses extended analog state message and fires an event that
@@ -43,10 +43,6 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
  */
 public class ParsingExtendedAnalogMessageState extends AbstractState {
 
-    public ParsingExtendedAnalogMessageState(FiniteStateMachine fsm) {
-        super(fsm);
-    }
-
     @Override
     public void process(byte b) {
         if (b == END_SYSEX) {
@@ -56,11 +52,11 @@ public class ParsingExtendedAnalogMessageState extends AbstractState {
             for (int i = 2; i < buffer.length; i++) {
                 value |= buffer[i] << 7 * (i - 1);
             }
-            Event evt = new Event(ANALOG_MESSAGE_RESPONSE, FIRMATA_MESSAGE_EVENT_TYPE);
+            Event evt = new Event(ANALOG_MESSAGE_RESPONSE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
             evt.setBodyItem(PIN_ID, pinId);
             evt.setBodyItem(PIN_VALUE, value);
             publish(evt);
-            transitTo(WaitingForMessageState.class);
+            transitTo(WaitingForMessageState.class, b);
         } else {
             bufferize(b);
         }

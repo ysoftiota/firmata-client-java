@@ -21,15 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package org.firmata4j.fsm;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The event of very loose structure. It provides possibility to build an event
- * of structure that meets the needs of a particular FSM application.
+ * The event of very loose structure. It provides possibility to build an event of structure that meets the needs of a
+ * particular FSM application.
  *
  * @author Oleg Kurbatov &lt;o.v.kurbatov@gmail.com&gt;
  */
@@ -37,18 +36,9 @@ public class Event {
 
     private final long timestamp;
     private final String name;
-    private final String type;
-    private final Map<String, Object> body;
+    private final EventType type;
+    private final Map<String, Object> body = new HashMap<>();
 
-    /**
-     * Constructs the event of unspecified type and without a name.
-     */
-    public Event() {
-        timestamp = System.currentTimeMillis();
-        name = "unspecified";
-        type = "unspecified";
-        body = new HashMap<>();
-    }
 
     /**
      * Constructs the event of specified type with specified name.
@@ -56,40 +46,12 @@ public class Event {
      * @param name the name of the event
      * @param type the type of the event
      */
-    public Event(String name, String type) {
+    public Event(String name, EventType type) {
         timestamp = System.currentTimeMillis();
         this.name = name;
         this.type = type;
-        body = new HashMap<>();
-    }
-    
-    /**
-     * Constructs the event of specified type with specified name.
-     *
-     * @param name the name of the event
-     * @param type the type of the event
-     */
-    public Event(String name, String type, long timestamp) {
-        this.timestamp = timestamp;
-        this.name = name;
-        this.type = type;
-        body = new HashMap<>();
     }
 
-    /**
-     * Constructs the event of specified type with specified name. This
-     * constructor allows to set the body of event at once.
-     *
-     * @param name the name of the event
-     * @param type the type of the event
-     * @param body the event's body
-     */
-    public Event(String name, String type, Map<String, Object> body) {
-        timestamp = System.currentTimeMillis();
-        this.name = name;
-        this.type = type;
-        this.body = new HashMap<>(body);
-    }
 
     /**
      * Returns the name of the event.
@@ -108,7 +70,7 @@ public class Event {
     /**
      * Returns the type of the event.
      */
-    public String getType() {
+    public EventType getType() {
         return type;
     }
 
@@ -121,6 +83,7 @@ public class Event {
 
     /**
      * Returns the item of the event's body.
+     *
      * @param key the key of event item
      * @return the event item
      */
@@ -130,6 +93,7 @@ public class Event {
 
     /**
      * Sets the item of the event's body.
+     *
      * @param key the key of event item
      * @param value the event item
      */

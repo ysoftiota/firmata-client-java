@@ -31,10 +31,18 @@ package org.firmata4j;
  */
 public class IOEvent {
 
-    private final IODevice device;
+    private IODevice device;
     private final Pin pin;
     private final long value;
     private final long timestamp;
+
+    public IOEvent() {
+        this.timestamp = System.currentTimeMillis();
+        this.pin = null;
+        this.value = 0;
+    }
+    
+    
 
     /**
      * Constructs the event is relevant to {@link IODevice} as a whole.
@@ -48,20 +56,6 @@ public class IOEvent {
         this.timestamp = System.currentTimeMillis();
     }
 
-    /**
-     * Constructs the event is relevant to {@link IODevice} as a whole.
-     * <br/>
-     * This constructor allows setting the timestamp of event.
-     * 
-     * @param device the device that originated the event
-     * @param timestamp the timestamp of event
-     */
-    public IOEvent(IODevice device, long timestamp) {
-        this.device = device;
-        this.pin = null;
-        this.value = 0;
-        this.timestamp = timestamp;
-    }
 
     /**
      * Constructs the event is relevant to a particular {@link Pin}.
@@ -75,20 +69,6 @@ public class IOEvent {
         this.timestamp = System.currentTimeMillis();
     }
     
-    /**
-     * Constructs the event is relevant to a particular {@link Pin}.
-     * <br/>
-     * This constructor allows setting the timestamp of event.
-     * 
-     * @param pin the pin that originated the event
-     * @param timestamp the timestamp of event
-     */
-    public IOEvent(Pin pin, long timestamp) {
-        this.device = pin.getDevice();
-        this.pin = pin;
-        this.value = pin.getValue();
-        this.timestamp = timestamp;
-    }
 
     /**
      * Returns the device that relates to the event.

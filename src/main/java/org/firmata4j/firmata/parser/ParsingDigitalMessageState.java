@@ -29,6 +29,7 @@ import org.firmata4j.fsm.AbstractState;
 import org.firmata4j.fsm.FiniteStateMachine;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import org.firmata4j.fsm.EventType;
 
 /**
  * This state parses digital message and fires an event that contains
@@ -45,11 +46,10 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
  */
 public class ParsingDigitalMessageState extends AbstractState {
 
-    private int portId, counter, value;
+    private int  counter, value;
 
-    public ParsingDigitalMessageState(FiniteStateMachine fsm, int portId) {
-        super(fsm);
-        this.portId = portId;
+    private int getPortId() {
+        return getTransitionByte() & 0x0F;
     }
 
     @Override
@@ -61,14 +61,14 @@ public class ParsingDigitalMessageState extends AbstractState {
                 break;
             case 1:
                 value |= b << 7;
-                int pinId = portId * 8;
+                int pinId = getPortId() * 8;
                 for (int i = 0; i < 8; i++) {
-                    Event evt = new Event(DIGITAL_MESSAGE_RESPONSE, FIRMATA_MESSAGE_EVENT_TYPE);
+                    Event evt = new Event(DIGITAL_MESSAGE_RESPONSE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
                     evt.setBodyItem(PIN_ID, pinId + i);
                     evt.setBodyItem(PIN_VALUE, (value >>> i) & 0x01);
                     publish(evt);
                 }
-                transitTo(WaitingForMessageState.class);
+                transitTo(WaitingForMessageState.class, b);
                 break;
         }
     }

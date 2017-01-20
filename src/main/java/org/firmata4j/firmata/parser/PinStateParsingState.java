@@ -26,9 +26,9 @@ package org.firmata4j.firmata.parser;
 
 import org.firmata4j.fsm.Event;
 import org.firmata4j.fsm.AbstractState;
-import org.firmata4j.fsm.FiniteStateMachine;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import org.firmata4j.fsm.EventType;
 
 /**
  * This state parses the pin state message.<br/>
@@ -39,15 +39,11 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
  */
 public class PinStateParsingState extends AbstractState {
 
-    public PinStateParsingState(FiniteStateMachine fsm) {
-        super(fsm);
-    }
-
     @Override
     public void process(byte b) {
         if (b == END_SYSEX) {
             byte[] buffer = getBuffer();
-            Event evt = new Event(PIN_STATE, FIRMATA_MESSAGE_EVENT_TYPE);
+            Event evt = new Event(PIN_STATE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
             evt.setBodyItem(PIN_ID, buffer[0]);
             evt.setBodyItem(PIN_MODE, buffer[1]);
             long value = 0;
@@ -56,7 +52,7 @@ public class PinStateParsingState extends AbstractState {
             }
             evt.setBodyItem(PIN_VALUE, value);
             publish(evt);
-            transitTo(WaitingForMessageState.class);
+            transitTo(WaitingForMessageState.class, b);
         } else {
             bufferize(b);
         }

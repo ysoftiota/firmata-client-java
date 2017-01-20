@@ -25,7 +25,6 @@
 package org.firmata4j.firmata.parser;
 
 import org.firmata4j.fsm.AbstractState;
-import org.firmata4j.fsm.FiniteStateMachine;
 import org.firmata4j.fsm.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,30 +45,31 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
 public class ParsingSysexMessageState extends AbstractState {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ParsingSysexMessageState.class);
-    private static final Map<Byte, Class<? extends State>> STATES;
-
+    private static final Map<Byte, Class<? extends State>> STATIC_STATES;
+    
     static {
-        STATES = new HashMap<>();
-        STATES.put(REPORT_FIRMWARE, ParsingFirmwareMessageState.class);
-        STATES.put(EXTENDED_ANALOG, ParsingExtendedAnalogMessageState.class);
-        STATES.put(CAPABILITY_RESPONSE, ParsingCapabilityResponseState.class);
-        STATES.put(ANALOG_MAPPING_RESPONSE, ParsingAnalogMappingState.class);
-        STATES.put(PIN_STATE_RESPONSE, PinStateParsingState.class);
-        STATES.put(STRING_DATA, ParsingStringMessageState.class);
-        STATES.put(I2C_REPLY,ParsingI2CMessageState.class);
-    }
-
-    public ParsingSysexMessageState(FiniteStateMachine fsm) {
-        super(fsm);
+        STATIC_STATES = new HashMap<>();
+        STATIC_STATES.put(REPORT_FIRMWARE, ParsingFirmwareMessageState.class);
+        STATIC_STATES.put(EXTENDED_ANALOG, ParsingExtendedAnalogMessageState.class);
+        STATIC_STATES.put(CAPABILITY_RESPONSE, ParsingCapabilityResponseState.class);
+        STATIC_STATES.put(ANALOG_MAPPING_RESPONSE, ParsingAnalogMappingState.class);
+        STATIC_STATES.put(PIN_STATE_RESPONSE, PinStateParsingState.class);
+        STATIC_STATES.put(STRING_DATA, ParsingStringMessageState.class);
+        STATIC_STATES.put(I2C_REPLY,ParsingI2CMessageState.class);
     }
 
     @Override
     public void process(byte b) {
-        Class<? extends State> nextState = STATES.get(b);
+        Class<? extends State> nextState = STATIC_STATES.get(b);
+        if (nextState == null) {
+            LOGGER.debug("Sysex command {} not found in static, trying custom sysex commands.", b);
+            nextState = getDeviceConfiguration().getCustomSysexState(b);
+        }
+        
         if (nextState == null) {
             LOGGER.error("Unsupported sysex command {}.", b);
             nextState = WaitingForMessageState.class;
         }
-        transitTo(nextState);
+        transitTo(nextState, b);
     }
 }

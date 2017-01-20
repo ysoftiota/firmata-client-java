@@ -26,8 +26,8 @@ package org.firmata4j.firmata.parser;
 
 import org.firmata4j.fsm.AbstractState;
 import org.firmata4j.fsm.Event;
-import org.firmata4j.fsm.FiniteStateMachine;
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import org.firmata4j.fsm.EventType;
 
 /**
  *
@@ -35,18 +35,14 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
  */
 public class ParsingStringMessageState extends AbstractState {
 
-    public ParsingStringMessageState(FiniteStateMachine fsm) {
-        super(fsm);
-    }
-
     @Override
     public void process(byte b) {
         if (b == END_SYSEX) {
             byte[] buffer = getBuffer();
             String value = decode(buffer, 0, buffer.length);
-            Event event = new Event(STRING_MESSAGE, FIRMATA_MESSAGE_EVENT_TYPE);
+            Event event = new Event(STRING_MESSAGE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
             event.setBodyItem(STRING_MESSAGE, value);
-            transitTo(WaitingForMessageState.class);
+            transitTo(WaitingForMessageState.class, b);
             publish(event);
         } else {
             bufferize(b);

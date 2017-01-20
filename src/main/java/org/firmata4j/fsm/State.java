@@ -24,6 +24,8 @@
 
 package org.firmata4j.fsm;
 
+import org.firmata4j.DeviceConfiguration;
+
 /**
  * The interface of the state of the {@link FiniteStateMachine}.
  *
@@ -38,13 +40,24 @@ public interface State {
      *
      * @param b the input byte
      */
-    public void process(byte b);
+    void process(byte b);
 
     /**
      * Returns the {@link FiniteStateMachine} instance the state belongs to.
      *
      * @return the finite state machine
      */
-    public FiniteStateMachine getFiniteStateMashine();
-
+    FiniteStateMachine getFiniteStateMashine();
+    
+    void setDeviceConfiguration(DeviceConfiguration deviceConfiguration);
+    
+    void setFiniteStateMashine(FiniteStateMachine fsm);
+    
+    /**
+     * Sets byte which triggered transition to this state.
+     * @param b transition byte. NULL for no byte (start of FSM).
+     */
+    void setTransitionByte(Byte b);
+    
+    Byte getTransitionByte();
 }
