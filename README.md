@@ -1,7 +1,6 @@
-[![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/olegkurbatov?utm_source=github&utm_medium=button&utm_term=olegkurbatov&utm_campaign=github)
 
-## firmata4j
-**firmata4j** is a client library of [Firmata](https://github.com/firmata/protocol)
+## firmata-client-java
+**firmata-client-java** is a client library of [Firmata](https://github.com/firmata/protocol)
 written in Java. The library allows controlling Arduino (or another board) which
 runs Firmata protocol from your java program.
 
@@ -19,9 +18,9 @@ Add the following dependency to `pom.xml` of your project:
 
 ```xml
 <dependency>
-    <groupId>com.github.kurbatov</groupId>
-    <artifactId>firmata4j</artifactId>
-    <version>2.3.4.1</version>
+    <groupId>com.ysoft.iota.firmata</groupId>
+    <artifactId>firmata-client-java</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -117,10 +116,10 @@ frame.setVisible(true);
 the pin. State of the output pin can be changed by double clicking on it.
 
 An example of `JPinboard` usage can be found in
-[`org.firmata4j.Example` class](https://github.com/kurbatov/firmata4j/blob/master/src/main/java/org/firmata4j/Example.java).
+[`org.firmata-client-java.Example` class](https://github.com/kurbatov/firmata-client-java/blob/master/src/main/java/org/firmata-client-java/Example.java).
 
 ## I2C
-**firmata4j** supports working with I2C devices. You can obtain a reference to
+**firmata-client-java** supports working with I2C devices. You can obtain a reference to
 an I2C device in this way:
 
 ```java
@@ -130,16 +129,16 @@ byte i2cAddress = 0x3C;
 I2CDevice i2cDevice = device.getI2CDevice(i2cAddress);
 ```
 
-You may find convenient writing a wrapper for [`I2CDevice` class](https://github.com/kurbatov/firmata4j/blob/master/src/main/java/org/firmata4j/I2CDevice.java)
-to facilitate communication with I2C device. Consider [`I2CExample`](https://github.com/kurbatov/firmata4j/blob/master/src/main/java/org/firmata4j/I2CExample.java)
-and [`SSD1306`](https://github.com/kurbatov/firmata4j/blob/master/src/main/java/org/firmata4j/ssd1306/SSD1306.java)
+You may find convenient writing a wrapper for [`I2CDevice` class](https://github.com/kurbatov/firmata-client-java/blob/master/src/main/java/org/firmata-client-java/I2CDevice.java)
+to facilitate communication with I2C device. Consider [`I2CExample`](https://github.com/kurbatov/firmata-client-java/blob/master/src/main/java/org/firmata-client-java/I2CExample.java)
+and [`SSD1306`](https://github.com/kurbatov/firmata-client-java/blob/master/src/main/java/org/firmata-client-java/ssd1306/SSD1306.java)
 classes as an example of that approach.
 
 ## Versions
-**firmata4j** sticks to Firmata protocol versions. The first available version
-of **firmata4j** is 2.3.1.
+**firmata-client-java** sticks to Firmata protocol versions. The first available version
+of **firmata-client-java** is 2.3.1.
 
-**firmata4j**-2.3.x will work well with Fimata v. 2.3.x. Actually it should work
+**firmata-client-java**-2.3.x will work well with Fimata v. 2.3.x. Actually it should work
 with Firmata v. 2.x.x but not necessarily support all of the protocol features.
 The first digits of versions must be equal because those stand for incompatible
 changes of the protocol.
@@ -172,5 +171,5 @@ If you have an improvement to share, please, do the following:
 5. Create new Pull Request
 
 ## License
-**firmata4j** is distributed under the terms of the MIT License. See the
-[LICENSE](https://github.com/kurbatov/firmata4j/blob/master/LICENSE) file.
+**firmata-client-java** is distributed under the terms of the MIT License. See the
+[LICENSE](https://github.com/ysoftiota/firmata-client-java/blob/master/LICENSE) file.
