@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package org.firmata4j.firmata.parser;
 
 import org.firmata4j.fsm.Event;
@@ -29,12 +28,13 @@ import org.firmata4j.fsm.AbstractState;
 import org.firmata4j.fsm.FiniteStateMachine;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import org.firmata4j.fsm.EventType;
+import org.firmata4j.fsm.StateFactory;
 
 /**
- * This state parses capability response and fires an event that contains
- * information about pins and their supported modes.<br/>
- * After receiving the last byte, the state transfers FSM to
- * {@link WaitingForMessageState}.
+ * This state parses capability response and fires an event that contains information about pins and their supported
+ * modes.<br/>
+ * After receiving the last byte, the state transfers FSM to {@link WaitingForMessageState}.
  *
  * @author Oleg Kurbatov &lt;o.v.kurbatov@gmail.com&gt;
  */
@@ -42,14 +42,10 @@ public class ParsingCapabilityResponseState extends AbstractState {
 
     private byte pinId;
 
-    public ParsingCapabilityResponseState(FiniteStateMachine fsm) {
-        super(fsm);
-    }
-
     @Override
     public void process(byte b) {
         if (b == END_SYSEX) {
-            transitTo(WaitingForMessageState.class);
+            transitTo(WaitingForMessageState.class, b);
         } else if (b == 127) {
             byte[] buffer = getBuffer();
             byte[] supportedModes = new byte[buffer.length / 2];
@@ -57,11 +53,12 @@ public class ParsingCapabilityResponseState extends AbstractState {
                 //every second byte contains mode's resolution of pin
                 supportedModes[i / 2] = buffer[i];
             }
-            Event evt = new Event(PIN_CAPABILITIES_MESSAGE, FIRMATA_MESSAGE_EVENT_TYPE);
+            Event evt = new Event(PIN_CAPABILITIES_MESSAGE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
             evt.setBodyItem(PIN_ID, pinId);
             evt.setBodyItem(PIN_SUPPORTED_MODES, supportedModes);
             publish(evt);
-            ParsingCapabilityResponseState nextState = new ParsingCapabilityResponseState(getFiniteStateMashine());
+            StateFactory stateFactory = getFiniteStateMashine().getStateFactory();
+            ParsingCapabilityResponseState nextState = stateFactory.createState(ParsingCapabilityResponseState.class, b);
             nextState.setPinId(++pinId);
             transitTo(nextState);
         } else {

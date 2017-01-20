@@ -24,6 +24,7 @@
 
 package org.firmata4j.fsm;
 
+import org.firmata4j.DeviceConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,14 +36,12 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractState implements State {
 
+    private DeviceConfiguration deviceConfiguration;
     private FiniteStateMachine fsm;
     private byte[] buffer = new byte[128];
     private int index;
+    private Byte transitionByte;
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractState.class);
-
-    public AbstractState(FiniteStateMachine fsm) {
-        this.fsm = fsm;
-    }
 
     @Override
     public FiniteStateMachine getFiniteStateMashine() {
@@ -57,8 +56,8 @@ public abstract class AbstractState implements State {
      *
      * @param stateClass the state class
      */
-    protected void transitTo(Class<? extends State> stateClass) {
-        fsm.transitTo(stateClass);
+    protected void transitTo(Class<? extends State> stateClass, Byte transitionByte) {
+        fsm.transitTo(stateClass, transitionByte);
     }
 
     /**
@@ -104,4 +103,28 @@ public abstract class AbstractState implements State {
         System.arraycopy(buffer, 0, result, 0, index);
         return result;
     }
+
+    protected DeviceConfiguration getDeviceConfiguration() {
+        return deviceConfiguration;
+    }
+
+    public void setDeviceConfiguration(DeviceConfiguration deviceConfiguration) {
+        this.deviceConfiguration = deviceConfiguration;
+    }
+
+    @Override
+    public void setFiniteStateMashine(FiniteStateMachine fsm) {
+        this.fsm = fsm;
+    }
+
+    @Override
+    public void setTransitionByte(Byte transitionByte) {
+        this.transitionByte = transitionByte;
+    }
+
+    @Override
+    public Byte getTransitionByte() {
+        return transitionByte;
+    }
+    
 }

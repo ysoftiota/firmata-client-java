@@ -26,9 +26,9 @@ package org.firmata4j.firmata.parser;
 
 import org.firmata4j.fsm.Event;
 import org.firmata4j.fsm.AbstractState;
-import org.firmata4j.fsm.FiniteStateMachine;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import org.firmata4j.fsm.EventType;
 
 /**
  * This state parses firmware message and fires an event that contains the name
@@ -40,10 +40,6 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
  */
 public class ParsingFirmwareMessageState extends AbstractState {
 
-    public ParsingFirmwareMessageState(FiniteStateMachine fsm) {
-        super(fsm);
-    }
-
     @Override
     public void process(byte b) {
         if (b == END_SYSEX) {
@@ -51,11 +47,11 @@ public class ParsingFirmwareMessageState extends AbstractState {
             int major = buffer[0];
             int minor = buffer[1];
             String name = decode(buffer, 2, buffer.length - 2);
-            Event event = new Event(FIRMWARE_MESSAGE, FIRMATA_MESSAGE_EVENT_TYPE);
+            Event event = new Event(FIRMWARE_MESSAGE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
             event.setBodyItem(FIRMWARE_MAJOR, major);
             event.setBodyItem(FIRMWARE_MINOR, minor);
             event.setBodyItem(FIRMWARE_NAME, name);
-            transitTo(WaitingForMessageState.class);
+            transitTo(WaitingForMessageState.class, b);
             publish(event);
         } else {
             bufferize(b);

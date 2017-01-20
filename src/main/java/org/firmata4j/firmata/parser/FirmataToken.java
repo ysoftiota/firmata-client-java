@@ -146,8 +146,6 @@ public interface FirmataToken {
     public static final int MAX_SAMPLING_INTERVAL    = 100;
 
     // event types and names
-    public static final String FIRMATA_MESSAGE_EVENT_TYPE = "firmataMessage";
-    
     public static final String PROTOCOL_MESSAGE = "protocolMessage";
     public static final String PROTOCOL_MAJOR = "major";
     public static final String PROTOCOL_MINOR = "minor";
@@ -180,5 +178,8 @@ public interface FirmataToken {
     public static final String ERROR_MESSAGE = "error";
     public static final String ERROR_DESCRIPTION = "description";
     public static final String ERROR_CAUSE = "cause";
+    
+    public static final String CUSTOM_SYSEX_MESSAGE = "customSysexMessage";
+    public static final String CUSTOM_SYSEX_BYTE = "customSysexByte";
     
 }

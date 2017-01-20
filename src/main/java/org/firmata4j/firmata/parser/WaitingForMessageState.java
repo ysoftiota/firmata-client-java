@@ -19,7 +19,7 @@
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * THE SOFTWARE.  
  */
 
 package org.firmata4j.firmata.parser;
@@ -30,6 +30,7 @@ import org.firmata4j.fsm.AbstractState;
 import org.firmata4j.fsm.FiniteStateMachine;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import org.firmata4j.fsm.EventType;
 
 /**
  * This is initial default state of {@link FirmataDevice}.<br/>
@@ -42,10 +43,6 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
  */
 public class WaitingForMessageState extends AbstractState {
 
-    public WaitingForMessageState(FiniteStateMachine fsm) {
-        super(fsm);
-    }
-
     @Override
     public void process(byte b) {
         // first byte may contain not only command but additional information as well
@@ -53,23 +50,23 @@ public class WaitingForMessageState extends AbstractState {
         FiniteStateMachine fsm = getFiniteStateMashine();
         switch (command) {
             case DIGITAL_MESSAGE:
-                transitTo(new ParsingDigitalMessageState(fsm, b & 0x0F));
+                transitTo(ParsingDigitalMessageState.class, b);
                 break;
             case ANALOG_MESSAGE:
-                transitTo(new ParsingAnalogMessageState(fsm, b & 0x0F));
+                transitTo(ParsingAnalogMessageState.class, b);
                 break;
             case REPORT_VERSION:
-                transitTo(ParsingVersionMessageState.class);
+                transitTo(ParsingVersionMessageState.class, b);
                 break;
             case START_SYSEX:
-                transitTo(ParsingSysexMessageState.class);
+                transitTo(ParsingSysexMessageState.class, b);
                 break;
             case SYSTEM_RESET:
-                publish(new Event(SYSTEM_RESET_MESSAGE, FIRMATA_MESSAGE_EVENT_TYPE));
+                publish(new Event(SYSTEM_RESET_MESSAGE, EventType.FIRMATA_MESSAGE_EVENT_TYPE));
                 break;
             default:
                 //skip non control token
-                Event evt = new Event(ERROR_MESSAGE, FIRMATA_MESSAGE_EVENT_TYPE);
+                Event evt = new Event(ERROR_MESSAGE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
                 evt.setBodyItem(ERROR_DESCRIPTION, String.format("Unknown control token has been receved. Skipping. 0x%2X", b));
                 publish(evt);
         }

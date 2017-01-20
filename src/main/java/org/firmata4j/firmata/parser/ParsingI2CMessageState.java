@@ -25,9 +25,9 @@ package org.firmata4j.firmata.parser;
 
 import org.firmata4j.fsm.AbstractState;
 import org.firmata4j.fsm.Event;
-import org.firmata4j.fsm.FiniteStateMachine;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
+import org.firmata4j.fsm.EventType;
 
 /**
  * This class parses inbound I2C messages and publishes them when they are
@@ -36,10 +36,6 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
  * @author William Reichardt
  */
 public class ParsingI2CMessageState extends AbstractState {
-
-    public ParsingI2CMessageState(FiniteStateMachine fsm) {
-        super(fsm);
-    }
 
     /*
      * /* I2C reply
@@ -63,11 +59,11 @@ public class ParsingI2CMessageState extends AbstractState {
             byte register = buffer[1];
             byte[] message = new byte[buffer.length-2];
             System.arraycopy(buffer, 2, message, 0, buffer.length-2);
-            Event event = new Event(I2C_MESSAGE, FIRMATA_MESSAGE_EVENT_TYPE);
+            Event event = new Event(I2C_MESSAGE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
             event.setBodyItem(I2C_ADDRESS, address);
             event.setBodyItem(I2C_REGISTER, register);
             event.setBodyItem(I2C_MESSAGE, message);
-            transitTo(WaitingForMessageState.class);
+            transitTo(WaitingForMessageState.class, b);
             publish(event);
         } else {
             bufferize(b);

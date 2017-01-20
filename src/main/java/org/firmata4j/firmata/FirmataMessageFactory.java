@@ -297,6 +297,46 @@ public class FirmataMessageFactory {
     }
 
     /**
+     * Builds message for custom SysEx(0x01 - 0x0F). 
+     * @param customSysex 0x00-0x0F reserved for user-defined commands.
+     * @param data
+     * @return SysEx message.
+     */
+    public static byte[] customSysex(byte customSysex, byte[] data) {
+        byte[] message = new byte[data.length + 3];
+        message[0] = START_SYSEX;
+        message[1] = customSysex;
+        System.arraycopy(data, 0, message, 2, data.length);
+        message[message.length - 1] = END_SYSEX;
+        return message;
+    }
+    
+    /**
+     * Encodes string message for firmata protocol.
+     * @param msg
+     * @return 
+     */
+    public static byte[] encodeString(String msg) {
+        byte[] bytes = msg.getBytes();
+        return encodeBytes(bytes);
+    }
+    
+    /**
+     * Encodes byte array for firmata protocol.
+     * @param bytes
+     * @return 
+     */
+    public static byte[] encodeBytes(byte[] bytes) {
+        byte[] result = new byte[bytes.length * 2];
+        for (int i = 0; i < bytes.length; i++) {
+            byte b = bytes[i];
+            result[i * 2 ] = (byte) (b & 0x7F);
+            result[i * 2 + 1] = (byte) ((b >> 7) & 0x7F);
+        }
+        return result;
+    }
+
+    /**
      * Encodes the string as a SysEx message.
      *
      * @param message string message
