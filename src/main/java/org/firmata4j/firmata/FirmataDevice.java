@@ -269,6 +269,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Recieved serial event:'{}'", Hex.encodeHexString(readBytes));
                 }
+//                System.out.println("Recieved serial event:"+ Hex.encodeHexString(readBytes));
                 while (!byteQueue.offer(readBytes)) {
                     // trying to place bytes to queue until it succeeds
                 }

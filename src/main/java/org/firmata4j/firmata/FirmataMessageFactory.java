@@ -145,10 +145,28 @@ public class FirmataMessageFactory {
      * specified I2C device.
      *
      * @param slaveAddress address of the I2C device you want to shut up
+     * @param slaveRegister
      * @return the message
      */
-    public static byte[] i2cStopContinuousRequest(byte slaveAddress) {
-        return new byte[]{START_SYSEX, I2C_REQUEST, slaveAddress, I2C_STOP_READ_CONTINUOUS, END_SYSEX};
+    public static byte[] i2cStopContinuousRequest(byte slaveAddress, byte slaveRegister) {
+        byte[] message;
+        //TODO replace hardcoded slave address (MSB) with generated one to support 10-bit mode
+        // see https://github.com/firmata/protocol/blob/master/i2c.md
+        if (slaveRegister == 0) {
+            message = new byte[]{
+                START_SYSEX, I2C_REQUEST,
+                slaveAddress, I2C_STOP_READ_CONTINUOUS,
+                END_SYSEX
+            };
+        } else {
+            message = new byte[]{
+                START_SYSEX, I2C_REQUEST,
+                slaveAddress, I2C_STOP_READ_CONTINUOUS,
+                (byte) (slaveRegister & 0x7F), (byte) ((slaveRegister >>> 7) & 0x7F),
+                END_SYSEX
+            };
+        }
+        return message;
     }
 
     /* I2C SUPPORT ENDS */
