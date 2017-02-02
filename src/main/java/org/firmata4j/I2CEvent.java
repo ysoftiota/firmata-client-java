@@ -34,14 +34,17 @@ public class I2CEvent {
 
     private final I2CDevice device;
     private final byte[] data;
+    private final byte register;
 
-    public I2CEvent(I2CDevice device, byte[] data) {
+    public I2CEvent(I2CDevice device, byte register, byte[] data) {
         this.device = device;
         this.data = data;
+        this.register = register;
     }
 
     /**
      * Returns data received from {@link I2CDevice}.
+     * @return 
      */
     public byte[] getData() {
         return data;
@@ -49,9 +52,18 @@ public class I2CEvent {
 
     /**
      * Returns {@link I2CDevice} which sent a piece of data.
+     * @return 
      */
     public I2CDevice getDevice() {
         return device;
     }
 
+    /**
+     * Returns register which setn this event.
+     * @return 
+     */
+    public byte getRegister() {
+        return register;
+    }
+    
 }

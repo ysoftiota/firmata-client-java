@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package org.firmata4j;
 
 import java.io.IOException;
@@ -35,70 +34,89 @@ public interface I2CDevice {
 
     /**
      * Returns address of I2C device.
+     *
+     * @return address of I2C device.
      */
     public byte getAddress();
 
     /**
      * Sets delay between writing and reading data to/from I2C device.
-     * 
-     * @param delay delay between the moment the device is written to and the
-     * moment when the data can be read from it
+     *
+     * @param delay delay between the moment the device is written to and the moment when the data can be read from it
      * @throws IOException when delay cannot be set due to communication fail
      */
     public void setDelay(int delay) throws IOException;
 
     /**
      * Sends data to the I2C device.
-     * 
+     *
      * @param data data to send
-     * @throws IOException when the data cannot be sent due to communication
-     * fail
+     * @throws IOException when the data cannot be sent due to communication fail
      */
     public void tell(byte... data) throws IOException;
 
     /**
-     * Requests data from I2C device and receives it only once. Specified
-     * listener is exclusive processor of the received data.
-     * 
-     * @param responseLength length of expected response
-     * @param listener processor of the response
-     * @throws IOException when I2C device cannot be asked for data due to 
-     * communication fail
-     */
-    public void ask(byte responseLength, I2CListener listener) throws IOException;
-
-    /**
-     * Registers a listener as a receiver of regular updates from I2C device.
-     * <br/>
-     * The listener starts receiving updates after
-     * {@link #startReceivingUpdates} invocation.
-     * 
+     * Registers a listener as a receiver of regular updates from I2C device (on all registers).
+     *
      * @param listener the object that receives updates
      */
     public void subscribe(I2CListener listener);
 
     /**
+     * Registers a listener as a receiver of regular updates from I2C device on specified register.
+     *
+     * @param register
+     * @param listener
+     */
+    void subscribe(byte register, I2CListener listener);
+
+    /**
      * Unregisters a listener from receiving of regular updates from I2C device.
-     * 
+     *
      * @param listener the object that used to receive updates
      */
     public void unsubscribe(I2CListener listener);
 
     /**
-     * Tells I2C device to send data continuously as it available.
-     * 
-     * @param messageLength length of expected message
-     * @throws IOException when I2C device cannot be asked for data due to 
-     * communication fail
+     * Unregisters a listener from receiving of regular updates from I2C device.
+     *
+     * @param register
+     * @param listener the object that used to receive updates
      */
-    public void startReceivingUpdates(byte messageLength) throws IOException;
+    void unsubscribe(byte register, I2CListener listener);
 
     /**
      * Tells I2C device to stop sending data continuously.
-     * 
-     * @throws IOException when I2C device cannot be asked to stop due to 
-     * communication fail
+     *
+     * @throws IOException when I2C device cannot be asked to stop due to communication fail
      */
     public void stopReceivingUpdates() throws IOException;
+
+    /**
+     * Tells I2C device to stop sending data continuously for specified register.
+     *
+     * @param register
+     * @throws IOException when I2C device cannot be asked to stop due to communication fail
+     */
+    public void stopReceivingUpdates(byte register) throws IOException;
+
+    /**
+     * Tells I2C device to send data.
+     *
+     * @param register which register to ask.
+     * @param responseLength length of expected message in bytes.
+     * @param continuous send data continuously or just once.
+     * @throws IOException
+     */
+    void ask(byte register, byte responseLength, boolean continuous) throws IOException;
+
+    /**
+     * Tells I2C device to send data register=0.
+     *
+     * @param responseLength length of expected message in bytes.
+     * @param continuous send data continuously or just once.
+     * @throws IOException
+     */
+    void ask(byte responseLength, boolean continuous) throws IOException;
 
 }

@@ -19,9 +19,9 @@ Add the following dependency to `pom.xml` of your project:
 
 ```xml
 <dependency>
-    <groupId>com.github.kurbatov</groupId>
-    <artifactId>firmata4j</artifactId>
-    <version>2.3.4.1</version>
+    <groupId>com.ysoft.iota.firmata</groupId>
+    <artifactId>firmata-client-java</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
 

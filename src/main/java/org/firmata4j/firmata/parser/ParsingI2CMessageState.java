@@ -30,8 +30,7 @@ import static org.firmata4j.firmata.parser.FirmataToken.*;
 import org.firmata4j.fsm.EventType;
 
 /**
- * This class parses inbound I2C messages and publishes them when they are
- * complete.
+ * This class parses inbound I2C messages and publishes them when they are complete.
  *
  * @author William Reichardt
  */
@@ -57,8 +56,8 @@ public class ParsingI2CMessageState extends AbstractState {
             byte[] buffer = convertI2CBuffer(getBuffer());
             byte address = buffer[0];
             byte register = buffer[1];
-            byte[] message = new byte[buffer.length-2];
-            System.arraycopy(buffer, 2, message, 0, buffer.length-2);
+            byte[] message = new byte[buffer.length - 2];
+            System.arraycopy(buffer, 2, message, 0, buffer.length - 2);
             Event event = new Event(I2C_MESSAGE, EventType.FIRMATA_MESSAGE_EVENT_TYPE);
             event.setBodyItem(I2C_ADDRESS, address);
             event.setBodyItem(I2C_REGISTER, register);
@@ -75,8 +74,7 @@ public class ParsingI2CMessageState extends AbstractState {
         byte[] outBuffer = new byte[outSize];
         int outIndex = 0;
         for (int index = 0; index < byteBuffer.length; index = index + 2) {
-            outBuffer[outIndex] = (byte) (((byteBuffer[index + 1] << 7) & 0x80) | (byteBuffer[index] & 0x7F));
-            outIndex++;
+            outBuffer[outIndex++] = (byte) (((byteBuffer[index + 1] << 7) & 0x80) | (byteBuffer[index] & 0x7F));
         }
         return outBuffer;
     }
