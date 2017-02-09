@@ -330,31 +330,6 @@ public class FirmataMessageFactory {
     }
     
     /**
-     * Encodes string message for firmata protocol.
-     * @param msg
-     * @return 
-     */
-    public static byte[] encodeString(String msg) {
-        byte[] bytes = msg.getBytes();
-        return encodeBytes(bytes);
-    }
-    
-    /**
-     * Encodes byte array for firmata protocol.
-     * @param bytes
-     * @return 
-     */
-    public static byte[] encodeBytes(byte[] bytes) {
-        byte[] result = new byte[bytes.length * 2];
-        for (int i = 0; i < bytes.length; i++) {
-            byte b = bytes[i];
-            result[i * 2 ] = (byte) (b & 0x7F);
-            result[i * 2 + 1] = (byte) ((b >> 7) & 0x7F);
-        }
-        return result;
-    }
-
-    /**
      * Encodes the string as a SysEx message.
      *
      * @param message string message

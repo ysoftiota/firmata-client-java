@@ -50,7 +50,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import org.apache.commons.codec.binary.Hex;
 import org.firmata4j.AbstractCustomSysexEvent;
 import org.firmata4j.CustomSysexEventListener;
@@ -279,8 +278,14 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
         }
     }
 
+    @Override
     public void sendCustomSysex(byte sysex, byte[] data) throws IOException {
-        sendMessage(FirmataMessageFactory.customSysex(sysex, data));
+        sendMessage(FirmataMessageFactory.customSysex(sysex, FirmataUtils.encodeBytes(data)));
+    }
+
+    @Override
+    public void sendCustomSysex(byte sysex, String stringMessage) throws IOException {
+        sendCustomSysex(sysex, stringMessage == null ? null : stringMessage.getBytes());
     }
 
     /**

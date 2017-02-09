@@ -142,5 +142,21 @@ public interface IODevice {
      * @throws IOException when sending a message fails
      */
     public void sendMessage(String message) throws IOException;
+    
+    /**
+     * Send custom sysex message.
+     * @param sysex sysex identifier byte (0x01 - 0x0F).
+     * @param data data to send (not yet encoded for Firmata).
+     * @throws IOException 
+     */
+    void sendCustomSysex(byte sysex, byte[] data) throws IOException;
+    
+    /**
+     * Send custom sysex message.
+     * @param sysex sysex identifier byte (0x01 - 0x0F).
+     * @param stringMessage data to send (not yet encoded for Firmata).
+     * @throws IOException 
+     */
+    void sendCustomSysex(byte sysex, String stringMessage) throws IOException;
 
 }

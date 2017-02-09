@@ -5,7 +5,7 @@ import org.firmata4j.fsm.Event;
 import org.firmata4j.fsm.FiniteStateMachine;
 
 /**
- * Event from suctom sysces call handling.
+ * Event from custom sysex call handling.
  * @author Stepan Novacek &lt;stepan.novacek@ysoft.com&gt;
  */
 public abstract class AbstractCustomSysexEvent extends IOEvent {
@@ -30,7 +30,7 @@ public abstract class AbstractCustomSysexEvent extends IOEvent {
     }
 
     /**
-     * 
+     * Load properties from event hashmap {@link Event#getBody() }.
      * @param event event from {@link FiniteStateMachine}.
      */
     protected abstract void loadCustomContent(Event event);
