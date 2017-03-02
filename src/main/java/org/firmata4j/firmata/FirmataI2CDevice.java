@@ -23,12 +23,12 @@
  */
 package org.firmata4j.firmata;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.firmata4j.DeviceCommunicationException;
 import org.firmata4j.I2CDevice;
 import org.firmata4j.I2CEvent;
 import org.firmata4j.I2CListener;
@@ -58,22 +58,22 @@ public class FirmataI2CDevice implements I2CDevice {
     }
 
     @Override
-    public void setDelay(int delay) throws IOException {
+    public void setDelay(int delay) throws DeviceCommunicationException {
         masterDevice.setI2CDelay(delay);
     }
 
     @Override
-    public void tell(byte... data) throws IOException {
+    public void tell(byte... data) throws DeviceCommunicationException {
         masterDevice.sendMessage(FirmataMessageFactory.i2cWriteRequest(address, data));
     }
 
     @Override
-    public void ask(byte register, byte responseLength, boolean continuous) throws IOException {
+    public void ask(byte register, byte responseLength, boolean continuous) throws DeviceCommunicationException {
         masterDevice.sendMessage(FirmataMessageFactory.i2cReadRequest(address, register, responseLength, continuous));
     }
 
     @Override
-    public void ask(byte responseLength, boolean continuous) throws IOException {
+    public void ask(byte responseLength, boolean continuous) throws DeviceCommunicationException {
         ask((byte) 0, responseLength, continuous);
     }
 
@@ -106,12 +106,12 @@ public class FirmataI2CDevice implements I2CDevice {
     }
 
     @Override
-    public void stopReceivingUpdates() throws IOException {
+    public void stopReceivingUpdates() throws DeviceCommunicationException {
         stopReceivingUpdates((byte) 0);
     }
 
     @Override
-    public void stopReceivingUpdates(byte register) throws IOException {
+    public void stopReceivingUpdates(byte register) throws DeviceCommunicationException {
         masterDevice.sendMessage(FirmataMessageFactory.i2cStopContinuousRequest(address, register));
     }
 

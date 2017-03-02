@@ -53,6 +53,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.codec.binary.Hex;
 import org.firmata4j.AbstractCustomSysexEvent;
 import org.firmata4j.CustomSysexEventListener;
+import org.firmata4j.DeviceCommunicationException;
 import org.firmata4j.firmata.parser.FirmataToken;
 
 import static org.firmata4j.firmata.parser.FirmataToken.*;
@@ -231,7 +232,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
     }
 
     @Override
-    public synchronized I2CDevice getI2CDevice(byte address) throws IOException {
+    public synchronized I2CDevice getI2CDevice(byte address) throws DeviceCommunicationException {
         if (!i2cDevices.containsKey(address)) {
             i2cDevices.put(address, new FirmataI2CDevice(this, address));
         }
@@ -249,7 +250,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
     }
 
     @Override
-    public void sendMessage(String message) throws IOException {
+    public void sendMessage(String message) throws DeviceCommunicationException {
         if (message.length() > 15) {
             LOGGER.warn("Firmata 2.3.6 implementation has input buffer only 32 bytes so you can safely send only 15 characters log messages");
         }
@@ -279,12 +280,12 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
     }
 
     @Override
-    public void sendCustomSysex(byte sysex, byte[] data) throws IOException {
+    public void sendCustomSysex(byte sysex, byte[] data) throws DeviceCommunicationException {
         sendMessage(FirmataMessageFactory.customSysex(sysex, FirmataUtils.encodeBytes(data)));
     }
 
     @Override
-    public void sendCustomSysex(byte sysex, String stringMessage) throws IOException {
+    public void sendCustomSysex(byte sysex, String stringMessage) throws DeviceCommunicationException {
         sendCustomSysex(sysex, stringMessage == null ? null : stringMessage.getBytes());
     }
 
@@ -293,16 +294,16 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
      * This method is package-wide accessible to be used by {@link FirmataPin}.
      *
      * @param msg the Firmata message
-     * @throws IOException when writing fails
+     * @throws DeviceCommunicationException when writing fails
      */
-    void sendMessage(byte[] msg) throws IOException {
+    void sendMessage(byte[] msg) throws DeviceCommunicationException {
         try {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Sending message: '{}'", Hex.encodeHexString(msg));
             }
             commPort.getOutputStream().write(msg);
         } catch (IOException ex) {
-            throw new IOException("Cannot send message to device", ex);
+            throw new DeviceCommunicationException("Cannot send message to device", ex);
         }
     }
 
@@ -322,9 +323,9 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
      * delay.
      *
      * @param delay
-     * @throws IOException when sending of configuration to firmata-device failed
+     * @throws DeviceCommunicationException when sending of configuration to firmata-device failed
      */
-    void setI2CDelay(int delay) throws IOException {
+    void setI2CDelay(int delay) throws DeviceCommunicationException {
         byte[] message = FirmataMessageFactory.i2cConfigRequest(delay);
         int longestDelaySoFar = longestI2CDelay.get();
         while (longestDelaySoFar < delay) {
@@ -338,9 +339,9 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
     /**
      * Tries to release all resources and properly terminate the connection to the hardware.
      *
-     * @throws IOException when communication could not be stopped properly
+     * @throws DeviceCommunicationException when communication could not be stopped properly
      */
-    private void shutdown() throws IOException {
+    private void shutdown() throws DeviceCommunicationException {
         ready.set(false);
         sendMessage(FirmataMessageFactory.analogReport(false));
         sendMessage(FirmataMessageFactory.digitalReport(false));
@@ -382,7 +383,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
         firmwareInfo = event.getBody();
         try {
             sendMessage(FirmataMessageFactory.REQUEST_CAPABILITY);
-        } catch (IOException ex) {
+        } catch (DeviceCommunicationException ex) {
             LOGGER.error("Error requesting device capabilities.", ex);
         }
     }
@@ -406,7 +407,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
             // if the pin supports some modes, we ask for its current mode and value
             try {
                 sendMessage(FirmataMessageFactory.pinStateRequest(pinId));
-            } catch (IOException ex) {
+            } catch (DeviceCommunicationException ex) {
                 LOGGER.error(String.format("Error requesting state of pin %d", pin.getIndex()), ex);
             }
         }
@@ -429,7 +430,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
         if (initializedPins.incrementAndGet() == pins.size()) {
             try {
                 sendMessage(FirmataMessageFactory.ANALOG_MAPPING_REQUEST);
-            } catch (IOException e) {
+            } catch (DeviceCommunicationException e) {
                 LOGGER.error("Error on request analog mapping", e);
             }
         }
@@ -446,7 +447,7 @@ public class FirmataDevice implements IODevice, SerialPortEventListener {
         try {
             sendMessage(FirmataMessageFactory.analogReport(true));
             sendMessage(FirmataMessageFactory.digitalReport(true));
-        } catch (IOException ex) {
+        } catch (DeviceCommunicationException ex) {
             LOGGER.error("Cannot enable reporting from device", ex);
         }
         ready.set(true);

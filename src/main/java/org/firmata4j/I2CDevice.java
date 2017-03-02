@@ -23,8 +23,6 @@
  */
 package org.firmata4j;
 
-import java.io.IOException;
-
 /**
  * Represents an I2C device and encapsulates logic to communicate to it.
  *
@@ -43,17 +41,17 @@ public interface I2CDevice {
      * Sets delay between writing and reading data to/from I2C device.
      *
      * @param delay delay between the moment the device is written to and the moment when the data can be read from it
-     * @throws IOException when delay cannot be set due to communication fail
+     * @throws DeviceCommunicationException when delay cannot be set due to communication fail
      */
-    public void setDelay(int delay) throws IOException;
+    public void setDelay(int delay) throws DeviceCommunicationException;
 
     /**
      * Sends data to the I2C device.
      *
      * @param data data to send
-     * @throws IOException when the data cannot be sent due to communication fail
+     * @throws DeviceCommunicationException when the data cannot be sent due to communication fail
      */
-    public void tell(byte... data) throws IOException;
+    public void tell(byte... data) throws DeviceCommunicationException;
 
     /**
      * Registers a listener as a receiver of regular updates from I2C device (on all registers).
@@ -88,17 +86,17 @@ public interface I2CDevice {
     /**
      * Tells I2C device to stop sending data continuously.
      *
-     * @throws IOException when I2C device cannot be asked to stop due to communication fail
+     * @throws DeviceCommunicationException when I2C device cannot be asked to stop due to communication fail
      */
-    public void stopReceivingUpdates() throws IOException;
+    public void stopReceivingUpdates() throws DeviceCommunicationException;
 
     /**
      * Tells I2C device to stop sending data continuously for specified register.
      *
      * @param register
-     * @throws IOException when I2C device cannot be asked to stop due to communication fail
+     * @throws DeviceCommunicationException when I2C device cannot be asked to stop due to communication fail
      */
-    public void stopReceivingUpdates(byte register) throws IOException;
+    public void stopReceivingUpdates(byte register) throws DeviceCommunicationException;
 
     /**
      * Tells I2C device to send data.
@@ -106,17 +104,17 @@ public interface I2CDevice {
      * @param register which register to ask.
      * @param responseLength length of expected message in bytes.
      * @param continuous send data continuously or just once.
-     * @throws IOException
+     * @throws DeviceCommunicationException
      */
-    void ask(byte register, byte responseLength, boolean continuous) throws IOException;
+    void ask(byte register, byte responseLength, boolean continuous) throws DeviceCommunicationException;
 
     /**
      * Tells I2C device to send data register=0.
      *
      * @param responseLength length of expected message in bytes.
      * @param continuous send data continuously or just once.
-     * @throws IOException
+     * @throws DeviceCommunicationException
      */
-    void ask(byte responseLength, boolean continuous) throws IOException;
+    void ask(byte responseLength, boolean continuous) throws DeviceCommunicationException;
 
 }

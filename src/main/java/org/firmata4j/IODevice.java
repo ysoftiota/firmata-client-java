@@ -109,9 +109,9 @@ public interface IODevice {
      * 
      * @param address
      * @return I2C device
-     * @throws IOException when communication to the IO device failed
+     * @throws DeviceCommunicationException when communication to the IO device failed
      */
-    public I2CDevice getI2CDevice(byte address) throws IOException;
+    public I2CDevice getI2CDevice(byte address) throws DeviceCommunicationException;
 
     /**
      * Adds the specified listener to receive events from this device.
@@ -139,24 +139,24 @@ public interface IODevice {
      * Sends arbitrary message to device.
      * 
      * @param message the message
-     * @throws IOException when sending a message fails
+     * @throws DeviceCommunicationException when sending a message fails
      */
-    public void sendMessage(String message) throws IOException;
+    public void sendMessage(String message) throws DeviceCommunicationException;
     
     /**
      * Send custom sysex message.
      * @param sysex sysex identifier byte (0x01 - 0x0F).
      * @param data data to send (not yet encoded for Firmata).
-     * @throws IOException 
+     * @throws DeviceCommunicationException 
      */
-    void sendCustomSysex(byte sysex, byte[] data) throws IOException;
+    void sendCustomSysex(byte sysex, byte[] data) throws DeviceCommunicationException;
     
     /**
      * Send custom sysex message.
      * @param sysex sysex identifier byte (0x01 - 0x0F).
      * @param stringMessage data to send (not yet encoded for Firmata).
-     * @throws IOException 
+     * @throws DeviceCommunicationException 
      */
-    void sendCustomSysex(byte sysex, String stringMessage) throws IOException;
+    void sendCustomSysex(byte sysex, String stringMessage) throws DeviceCommunicationException;
 
 }

@@ -207,7 +207,7 @@ public class SSD1306 {
                 System.arraycopy(buffer, i * 16, row, 1, 16);
                 device.tell(row);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Displaying attempt failed", e);
         }
     }
@@ -225,7 +225,7 @@ public class SSD1306 {
             for (int i = 0; i < command.length; i += 2) {
                 device.tell(Arrays.copyOfRange(command, i, i + 2));
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

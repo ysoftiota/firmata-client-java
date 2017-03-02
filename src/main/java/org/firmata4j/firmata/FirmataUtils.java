@@ -66,5 +66,21 @@ public class FirmataUtils {
         }
         return result;
     }
+    
+    /**
+     * Decode byte array from Firmata MSB/LSB byte pairs. Dencode byte array
+     *
+     * @param bytes
+     * @return decoded bytes.
+     */
+    public static int[] decodeBytesToInt(byte[] bytes) {
+        int outSize = new Double(Math.floor(bytes.length / 2)).intValue();
+        int outIndex = 0;
+        int[] result = new int[outSize];
+        for (int index = 0; index < bytes.length; index = index + 2) {
+            result[outIndex++] = (((bytes[index + 1] << 7) & 0x80) | (bytes[index] & 0x7F));
+        }
+        return result;
+    }
 
 }
