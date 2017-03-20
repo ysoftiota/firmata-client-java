@@ -24,7 +24,6 @@
 
 package org.firmata4j.firmata;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -74,7 +73,7 @@ public class FirmataPin implements Pin {
     }
 
     @Override
-    public synchronized void setMode(Mode mode) throws IOException {
+    public synchronized void setMode(Mode mode) {
         if (supports(mode)) {
             if (currentMode != mode) {
                 if (mode == Mode.SERVO) {
@@ -115,7 +114,7 @@ public class FirmataPin implements Pin {
     }
 
     @Override
-    public synchronized void setValue(long value) throws IOException, IllegalStateException {
+    public synchronized void setValue(long value) throws IllegalStateException {
         byte[] message;
         long newValue;
         if (currentMode == Mode.OUTPUT) {

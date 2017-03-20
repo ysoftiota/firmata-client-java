@@ -27,7 +27,6 @@ package org.firmata4j.ui;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.AbstractAction;
@@ -101,7 +100,7 @@ public class JPin extends JLabel implements PinEventListener {
                         long newValue = (model.getValue() == 0 ? 1 : 0);
                         try {
                             model.setValue(newValue);
-                        } catch (IOException ex) {
+                        } catch (Exception ex) {
                             JOptionPane.showMessageDialog(JPin.this, ex.getLocalizedMessage(), "", JOptionPane.ERROR_MESSAGE);
                         }
                     }
@@ -147,7 +146,7 @@ public class JPin extends JLabel implements PinEventListener {
                 public void actionPerformed(ActionEvent e) {
                     try {
                         model.setMode((Pin.Mode) getValue("mode"));
-                    } catch (IOException ex) {
+                    } catch (Exception ex) {
                         JOptionPane.showMessageDialog(JPin.this, ex.getLocalizedMessage(), "", JOptionPane.ERROR_MESSAGE);
                     }
                 }

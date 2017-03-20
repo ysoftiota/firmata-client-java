@@ -24,7 +24,6 @@
 
 package org.firmata4j;
 
-import java.io.IOException;
 import java.util.Set;
 import org.firmata4j.firmata.parser.FirmataToken;
 
@@ -146,7 +145,7 @@ public interface Pin {
      * @throws IOException when assigning is failed due a communication issue
      * @throws IllegalArgumentException when the pin does not support the mode
      */
-    public void setMode(Mode mode) throws IOException, IllegalArgumentException;
+    public void setMode(Mode mode) throws IllegalArgumentException;
 
     /**
      * Checks if the pin supports the mode
@@ -179,7 +178,7 @@ public interface Pin {
      * @throws IllegalStateException when the pin is in input mode such as
      * {@link Mode#INPUT} or {@link Mode#ANALOG}.
      */
-    public void setValue(long value) throws IOException, IllegalStateException;
+    public void setValue(long value) throws IllegalStateException;
     
     /**
      * Adds the specified listener to receive events from this pin.
