@@ -20,7 +20,7 @@ Add the following dependency to `pom.xml` of your project:
 
 ```xml
 <dependency>
-    <groupId>com.ysoft.iota.firmata</groupId>
+    <groupId>com.ysoft.firmata</groupId>
     <artifactId>firmata-client-java</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
