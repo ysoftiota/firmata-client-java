@@ -1,5 +1,7 @@
-
 ## firmata-client-java
+
+[![Build Status](https://travis-ci.org/ysoftiota/firmata-client-java.svg?branch=master)](https://travis-ci.org/ysoftiota/firmata-client-java)
+
 **firmata-client-java** is a client library of [Firmata](https://github.com/firmata/protocol)
 written in Java. The library allows controlling Arduino (or another board) which
 runs Firmata protocol from your java program.
