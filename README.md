@@ -129,10 +129,6 @@ byte i2cAddress = 0x3C;
 I2CDevice i2cDevice = device.getI2CDevice(i2cAddress);
 ```
 
-You may find convenient writing a wrapper for [`I2CDevice` class](https://github.com/kurbatov/firmata-client-java/blob/master/src/main/java/org/firmata-client-java/I2CDevice.java)
-to facilitate communication with I2C device. Consider [`I2CExample`](https://github.com/kurbatov/firmata-client-java/blob/master/src/main/java/org/firmata-client-java/I2CExample.java)
-and [`SSD1306`](https://github.com/kurbatov/firmata-client-java/blob/master/src/main/java/org/firmata-client-java/ssd1306/SSD1306.java)
-classes as an example of that approach.
 
 ## Versions
 **firmata-client-java** sticks to Firmata protocol versions. The first available version

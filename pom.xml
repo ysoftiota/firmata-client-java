@@ -15,6 +15,15 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+    
+    <developers>
+        <developer>
+            <email>stepan.novacek@ysoft.com</email>
+            <name>Stepan Novacek</name>
+            <organization>Y SOFT</organization>
+            <organizationUrl>http://www.ysoft.com</organizationUrl>
+        </developer>
+    </developers>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -104,7 +113,7 @@
                             <execution>
                                 <id>attach-sources</id>
                                 <goals>
-                                    <goal>jar-no-fork</goal>
+                                    <goal>jar</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -122,20 +131,6 @@
                                 <configuration>
                                     <additionalparam>-Xdoclint:none</additionalparam>
                                 </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
                             </execution>
                         </executions>
                     </plugin>
